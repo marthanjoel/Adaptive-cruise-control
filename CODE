@@ -1,0 +1,56 @@
+// ===== Pin Definitions =====
+const int irPin = 2;       // IR-08H obstacle sensor
+const int tiltPin = 3;     // Tilt sensor
+const int buzzer = 4;      // Buzzer
+const int relayPin = 5;    // Relay module
+
+// ===== Variables =====
+int irState = 0;
+int tiltState = 0;
+
+unsigned long timerStart = 0;      // Timer for relay and buzzer
+const unsigned long duration = 2000; // 2 seconds
+bool outputActive = false;          // Is relay/buzzer currently ON
+
+void setup() {
+  pinMode(irPin, INPUT);
+  pinMode(tiltPin, INPUT_PULLUP); // Tilt sensor uses pullup
+  pinMode(buzzer, OUTPUT);
+  pinMode(relayPin, OUTPUT);
+
+  digitalWrite(buzzer, LOW);
+  digitalWrite(relayPin, LOW);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Read sensor states
+  irState = digitalRead(irPin);       // 0 = obstacle detected
+  tiltState = digitalRead(tiltPin);   // 0 = tilted
+
+  // Debug info
+  Serial.print("IR Sensor: ");
+  Serial.print(irState);
+  Serial.print(" | Tilt Sensor: ");
+  Serial.println(tiltState);
+
+  // If either sensor is triggered, start 2-second timer
+  if ((irState == LOW || tiltState == LOW) && !outputActive) {
+    outputActive = true;
+    timerStart = millis();      // Start 2-second timer
+    digitalWrite(relayPin, HIGH);
+    digitalWrite(buzzer, HIGH);
+  }
+
+  // Check if 2 seconds have passed
+  if (outputActive && (millis() - timerStart >= duration)) {
+    digitalWrite(relayPin, LOW);
+    digitalWrite(buzzer, LOW);
+    outputActive = false;
+  }
+
+  delay(50); // small delay for stability
+}
+
+
